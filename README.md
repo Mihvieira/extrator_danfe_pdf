@@ -1,6 +1,6 @@
 # Extrator de Dados de Notas Fiscais Eletrônicas (DANFE Modelo 55)
 
-Módulo em Python projetado para extração, validação e estruturação automatizada de dados fiscais a partir de Documentos Auxiliares da Nota Fiscal Eletrônica (DANFE) em formato PDF, com tratamento posicional e suporte às variações de layouts vigentes entre os anos de 2017 e 2024.
+Módulo em Python projetado para extração, validação e estruturação automatizada de dados fiscais a partir de Documentos Auxiliares da Nota Fiscal Eletrônica (DANFE) em formato PDF, com tratamento posicional e suporte às variações de leiaute do padrão nacional (Layout 4.00 e notas técnicas vigentes).
 
 ---
 
@@ -35,7 +35,7 @@ extrator_danfe_pdf/
 
 ---
 
-## 2. Tratamento das Variações de Layout (2017–2024)
+## 2. Tratamento das Variações de Leiaute e Emissão
 
 1. **Regime Normal (CST) vs. Simples Nacional (CSOSN):**
    * O parser detecta dinamicamente se o cabeçalho tabular contém a coluna `O/CST` (3 dígitos: origem + tributação) ou `O/CSOSN` (4 dígitos: origem + operação no Simples Nacional), preenchendo adequadamente o campo `tipo_tributacao`.
