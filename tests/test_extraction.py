@@ -173,22 +173,15 @@ class TestDanfeExtractorSynthetic(unittest.TestCase):
                 self.assertTrue(os.path.isfile(paths["excel"]))
 
 
-if __name__ == "__main__":
-    unittest.main()
+# Para executar testes com arquivos reais não públicos, aponte a variável de ambiente:
+# export DANFE_REAL_PDF_PATH="/caminho/para/seu/arquivo.pdf"
+REAL_PDF_PATH = os.environ.get("DANFE_REAL_PDF_PATH")
 
 
-REAL_PDF_PATH = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "Notas Fiscais - Único Arquivo-20261109T125254Z-1-001",
-        "Nfe_s.pdf"
-    )
+@unittest.skipUnless(
+    bool(REAL_PDF_PATH and os.path.isfile(REAL_PDF_PATH)),
+    "Teste de lote real ignorado. Para habilitar, defina a variável DANFE_REAL_PDF_PATH."
 )
-
-
-@unittest.skipUnless(os.path.isfile(REAL_PDF_PATH), "PDF de teste real não encontrado neste ambiente.")
 class TestDanfeExtractorRealPdf(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -197,8 +190,8 @@ class TestDanfeExtractorRealPdf(unittest.TestCase):
         cls.docs, cls.itens, cls.dups = cls.extractor.process_pdf(REAL_PDF_PATH)
 
     def test_real_documents_count(self):
-        """Valida se todas as 346 páginas foram extraídas."""
-        self.assertEqual(len(self.docs), 346)
+        """Valida se documentos foram extraídos do lote real."""
+        self.assertGreater(len(self.docs), 0)
 
     def test_real_access_keys_integrity(self):
         """Valida unicidade e tamanho das chaves de acesso."""
@@ -229,5 +222,9 @@ class TestDanfeExtractorRealPdf(unittest.TestCase):
     def test_real_tax_regimes(self):
         """Valida presença de ambos os regimes CST e CSOSN no conjunto real."""
         regimes = set(it.tipo_tributacao for it in self.itens)
-        self.assertIn("CST", regimes)
-        self.assertIn("CSOSN", regimes)
+        self.assertTrue("CST" in regimes or "CSOSN" in regimes)
+
+
+if __name__ == "__main__":
+    unittest.main()
+

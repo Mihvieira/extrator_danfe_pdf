@@ -124,10 +124,14 @@ python3 main.py -i "/caminho/para/pasta_danfes" -q
 
 ## 5. Testes Automatizados
 
-O projeto possui uma suíte de testes unitários cobrindo parsers de seções, tabela de itens, utilitários e integração do extrator:
+O projeto possui uma suíte de testes automatizados com dados sintéticos mockados, garantindo isolamento completo e conformidade com a LGPD para execução em qualquer ambiente ou esteira de CI/CD (GitHub Actions):
 
 ```bash
+# Execução da suíte padrão de testes unitários e de integração sintética:
 python3 -m unittest discover tests
+
+# (Opcional) Execução local com lote próprio de PDFs reais via variável de ambiente:
+DANFE_REAL_PDF_PATH="/caminho/para/seu/arquivo.pdf" python3 -m unittest discover tests
 ```
 
 ---

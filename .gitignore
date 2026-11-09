@@ -1,8 +1,32 @@
+# Byte-compiled / optimized / C-extension artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# Test & coverage caches
 .pytest_cache/
+.coverage
+htmlcov/
+
+# Ambientes virtuais
+.venv/
+venv/
+ENV/
+
+# Arquivos e diretórios de dados locais (LGPD e sigilo fiscal)
+*.pdf
+*.csv
+*.xlsx
+*.xls
+input/
 output/
 dados_extraidos/
-.venv/
+dados_entrada/
+
+# Configurações de IDE / Sistema
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
