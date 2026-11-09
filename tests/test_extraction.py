@@ -175,3 +175,59 @@ class TestDanfeExtractorSynthetic(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+REAL_PDF_PATH = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "..",
+        "Notas Fiscais - Único Arquivo-20261109T125254Z-1-001",
+        "Nfe_s.pdf"
+    )
+)
+
+
+@unittest.skipUnless(os.path.isfile(REAL_PDF_PATH), "PDF de teste real não encontrado neste ambiente.")
+class TestDanfeExtractorRealPdf(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from extractor import DanfeExtractor
+        cls.extractor = DanfeExtractor(verbose=False)
+        cls.docs, cls.itens, cls.dups = cls.extractor.process_pdf(REAL_PDF_PATH)
+
+    def test_real_documents_count(self):
+        """Valida se todas as 346 páginas foram extraídas."""
+        self.assertEqual(len(self.docs), 346)
+
+    def test_real_access_keys_integrity(self):
+        """Valida unicidade e tamanho das chaves de acesso."""
+        chaves = [d.chave_acesso for d in self.docs]
+        self.assertEqual(len(chaves), len(set(chaves)))
+        for c in chaves:
+            self.assertEqual(len(c), 44)
+            self.assertTrue(c.isdigit())
+
+    def test_real_financial_consistency(self):
+        """Valida se o total financeiro dos itens bate exatamente com o total das notas."""
+        total_notas = round(sum(d.valor_total_nota for d in self.docs), 2)
+        total_itens = round(sum(it.valor_total for it in self.itens), 2)
+        self.assertEqual(total_notas, total_itens)
+
+    def test_real_icms_totals_consistency(self):
+        """Valida consistência dos totais de ICMS e BC ICMS."""
+        total_bc_docs = round(sum(d.bc_icms for d in self.docs), 2)
+        total_bc_itens = round(sum(it.bc_icms for it in self.itens), 2)
+        total_icms_docs = round(sum(d.valor_icms for d in self.docs), 2)
+        total_icms_itens = round(sum(it.valor_icms for it in self.itens), 2)
+
+        self.assertGreater(total_bc_docs, 0.0)
+        self.assertGreater(total_icms_docs, 0.0)
+        self.assertEqual(total_bc_docs, total_bc_itens)
+        self.assertEqual(total_icms_docs, total_icms_itens)
+
+    def test_real_tax_regimes(self):
+        """Valida presença de ambos os regimes CST e CSOSN no conjunto real."""
+        regimes = set(it.tipo_tributacao for it in self.itens)
+        self.assertIn("CST", regimes)
+        self.assertIn("CSOSN", regimes)

@@ -1,6 +1,6 @@
 # Extrator de Dados de Notas Fiscais Eletrônicas (DANFE Modelo 55)
 
-Módulo em Python projetado para extração e estruturação automatizada de dados fiscais a partir de Documentos Auxiliares da Nota Fiscal Eletrônica (DANFE) em formato PDF, com tratamento posicional e suporte às variações de layouts vigentes entre os anos de 2017 e 2024.
+Módulo em Python projetado para extração, validação e estruturação automatizada de dados fiscais a partir de Documentos Auxiliares da Nota Fiscal Eletrônica (DANFE) em formato PDF, com tratamento posicional e suporte às variações de layouts vigentes entre os anos de 2017 e 2024.
 
 ---
 
@@ -8,20 +8,29 @@ Módulo em Python projetado para extração e estruturação automatizada de dad
 
 O extrator utiliza o utilitário nativo de alta performance `pdftotext` (Poppler) em modo colunar (`-layout`), processando centenas de páginas em poucos segundos sem necessidade de OCR ou dependências binárias complexas.
 
+A arquitetura adota princípios de **Clean Code**, **Domain-Driven Design (DDD)** e **SOLID**:
+- **Pipeline e Strategy Pattern**: Seções do DANFE são analisadas por parsers especializados e desacoplados (`NFeSectionPipeline`, `IdentificacaoParser`, `TotaisImpostoParser`, etc.).
+- **Dependency Inversion (DIP)**: O motor de PDF é desacoplado através do protocolo `IPdfEngine`, facilitando extensões e testes unitários com mocks.
+- **Value Objects Imutáveis**: Modelagem orientada a domínio em `schemas.py` com dataclasses imutáveis para integridade de dados fiscais.
+- **Resiliência e Independência**: A exportação para CSV utiliza exclusivamente a biblioteca padrão do Python (`csv`), tornando as bibliotecas `pandas` e `openpyxl` estritamente opcionais para geração de planilhas Excel (`.xlsx`).
+
 ### Estrutura do Módulo
 
 ```
 extrator_danfe_pdf/
 ├── README.md               # Documentação técnica e guia de execução
-├── requirements.txt        # Dependências Python (pandas, openpyxl)
-├── schemas.py              # Classes tipadas de dados (NFeDocumento, NFeItem, NFeDuplicata)
-├── utils.py                # Utilitários de conversão numérica e sanitização
-├── pdf_engine.py           # Motor de extração de texto estruturado
-├── parser_sections.py      # Extração de Cabeçalho, Totais, Impostos e Dados Adicionais
-├── parser_items.py         # Extração tabular de produtos/serviços com suporte a multilinhas
-├── exporter.py             # Exportador relacional para CSV e Excel
-├── main.py                 # Interface de Linha de Comando (CLI)
-└── tests/                  # Testes automatizados de validação estrutural
+├── requirements.txt        # Dependências opcionais (pandas, openpyxl para Excel)
+├── schemas.py              # Modelagem de domínio (NFeDocumento, NFeItem, NFeDuplicata, etc.)
+├── utils.py                # Sanitização de strings e conversão monetária/decimal (PT-BR)
+├── pdf_engine.py           # Interface IPdfEngine e motor PopplerPdfEngine
+├── parser_sections.py      # Pipeline com parsers modulares de seções e impostos
+├── parser_items.py         # ItemTableParser para extração tabular com suporte a multilinhas
+├── extractor.py            # Orquestrador DanfeExtractor com logging estruturado e injeção
+├── exporter.py             # Exportador de dados para CSV nativo e Excel (.xlsx)
+├── main.py                 # Ponto de entrada CLI e execução direta por IDE
+└── tests/                  # Suíte de testes unitários e de integração
+    ├── test_extraction.py
+    └── test_unit_parsers.py
 ```
 
 ---
@@ -33,11 +42,13 @@ extrator_danfe_pdf/
 2. **Campos Estendidos de Imposto (EC 87/2015 & NT 2015.003 / 2016.002):**
    * Suporte às colunas de Partilha do ICMS interestadual (`V. ICMS UF REMET.`, `V. ICMS UF DEST.`, `V. FCP UF DEST.`), além de `V. TOT. TRIB.` (Lei 12.741/2012).
 3. **Mapeamento Posicional por Proximidade:**
-   * Devido a pequenas variações de largura de colunas entre diferentes ERPs emissores (Totvs, Linx, Sankhya, SAP, etc.), o alinhamento das colunas de impostos do item (`B.CÁLC ICMS`, `VALOR ICMS`, `VALOR IPI`, `ALÍQ. ICMS`, `ALÍQ. IPI`) é calculado dinamicamente em relação aos centros e limites dos cabeçalhos de cada página.
+   * Devido a variações de largura de colunas entre diferentes emissores (Totvs, Linx, Sankhya, SAP, etc.), o alinhamento das colunas de tributos do item (`B.CÁLC ICMS`, `VALOR ICMS`, `VALOR IPI`, `ALÍQ. ICMS`, `ALÍQ. IPI`, `DESCONTO`) é calculado dinamicamente em relação aos centros e limites horizontais dos cabeçalhos.
 4. **Descrições de Produtos Multilinhas:**
-   * Linhas secundárias contendo referências, modelos ou números de catálogo são automaticamente agregadas à descrição do produto anterior sem quebra de integridade tabular.
+   * Linhas secundárias contendo referências, modelos ou números de catálogo são automaticamente concatenadas à descrição do produto anterior sem corromper a integridade tabular.
 5. **Detecção Automatizada de Menções a ICMS-ST:**
-   * Leitura das `INFORMAÇÕES COMPLEMENTARES` com marcação booleana (`tem_mencao_icms_st`) e isolamento de referências legais (Decretos SEFIN/CRE de Rondônia, resoluções e convênios).
+   * Leitura e busca de padrões em `INFORMAÇÕES COMPLEMENTARES` com marcação booleana (`tem_mencao_icms_st`), isolando referências legais e decretos tributários.
+6. **Transporte e Dados de Carga:**
+   * Captura detalhada de modalidade de frete, transportador (CNPJ/CPF, UF), placa do veículo, quantidade de volumes e pesos (líquido e bruto).
 
 ---
 
@@ -46,14 +57,12 @@ extrator_danfe_pdf/
 A extração produz três arquivos relacionais integrados via `chave_acesso`:
 
 ### `nfe_documentos.csv` (1 registro por nota fiscal)
-* `chave_acesso` (Chave primária, 44 dígitos)
-* `numero_nf`, `serie`, `folha`, `tipo_operacao`, `natureza_operacao`, `protocolo_autorizacao`
-* `data_emissao`, `data_saida`, `hora_saida`
-* `emitente_cnpj`, `emitente_ie`, `emitente_ie_st`, `emitente_uf`
-* `destinatario_cnpj_cpf`, `destinatario_ie`, `destinatario_uf`
-* Totais: `bc_icms`, `valor_icms`, `bc_icms_st`, `valor_icms_st`, `valor_imp_importacao`, `valor_icms_uf_remet`, `valor_fcp_uf_dest`, `valor_pis`, `valor_total_produtos`, `valor_frete`, `valor_seguro`, `valor_desconto`, `outras_despesas`, `valor_total_ipi`, `valor_icms_uf_dest`, `valor_tot_trib`, `valor_cofins`, `valor_total_nota`
-* `modalidade_frete`, `transportador_cnpj_cpf`, `placa_veiculo`
-* `info_complementares`, `tem_mencao_icms_st`, `pagina_arquivo`, `arquivo_origem`
+* **Identificação:** `chave_acesso` (Chave primária, 44 dígitos), `numero_nf`, `serie`, `folha`, `tipo_operacao`, `natureza_operacao`, `protocolo_autorizacao`
+* **Emitente:** `emitente_cnpj`, `emitente_ie`, `emitente_ie_st`, `emitente_uf`
+* **Destinatário:** `destinatario_cnpj_cpf`, `destinatario_ie`, `destinatario_uf`, `data_emissao`, `data_saida`, `hora_saida`
+* **Totais e Impostos:** `bc_icms`, `valor_icms`, `bc_icms_st`, `valor_icms_st`, `valor_imp_importacao`, `valor_icms_uf_remet`, `valor_fcp_uf_dest`, `valor_pis`, `valor_total_produtos`, `valor_frete`, `valor_seguro`, `valor_desconto`, `outras_despesas`, `valor_total_ipi`, `valor_icms_uf_dest`, `valor_tot_trib`, `valor_cofins`, `valor_total_nota`
+* **Transporte e Carga:** `modalidade_frete`, `transportador_cnpj_cpf`, `transportador_uf`, `placa_veiculo`, `volume_quantidade`, `peso_bruto`, `peso_liquido`
+* **Metadados:** `info_complementares`, `tem_mencao_icms_st`, `pagina_arquivo`, `arquivo_origem`
 
 ### `nfe_itens.csv` (1 registro por item de produto/serviço)
 * `chave_acesso` (Chave estrangeira)
@@ -72,29 +81,59 @@ A extração produz três arquivos relacionais integrados via `chave_acesso`:
 ## 4. Como Executar
 
 ### Pré-requisitos
-* Python 3.10 ou superior
+* **Python 3.10** ou superior
 * Utilitário `pdftotext` (pacote `poppler-utils` no Linux)
   ```bash
   sudo apt-get install poppler-utils
   ```
+* *(Opcional)* Dependências para exportação em Excel (`.xlsx`):
+  ```bash
+  pip install -r requirements.txt
+  ```
 
-### Execução via Linha de Comando (CLI)
+---
+
+### Modos de Execução
+
+#### Opção A: Execução Direta / IDE (F5 ou Botão Run)
+Para executar diretamente pela IDE ou digitando `python3 main.py` sem passar argumentos de linha de comando, basta configurar as constantes no início do arquivo `main.py`:
+
+```python
+# main.py
+DEFAULT_INPUT_PATH = "/caminho/para/seus/arquivos_ou_pasta"
+DEFAULT_OUTPUT_DIR = "output"
+```
+
+#### Opção B: Interface de Linha de Comando (CLI)
 
 ```bash
-# Execução processando arquivo PDF específico (saída padrão na pasta ./output)
-python main.py -i "/caminho/para/danfe.pdf"
+# Processando um único arquivo PDF (saída padrão na pasta ./output)
+python3 main.py -i "/caminho/para/danfe.pdf"
 
-# Execução processando um diretório com múltiplos PDFs e salvando em pasta personalizada
-python main.py -i "/caminho/para/pasta_pdfs" -o "/caminho/para/saida"
+# Processando uma pasta com múltiplos PDFs e salvando em pasta personalizada
+python3 main.py -i "/caminho/para/pasta_danfes" -o "/caminho/para/saida"
 
-# Gerando somente arquivos CSV (sem gerar a planilha consolidada em .xlsx)
-python main.py -i "/caminho/para/danfe.pdf" --no-excel
+# Gerando exclusivamente arquivos CSV (desativa geração do consolidado em .xlsx)
+python3 main.py -i "/caminho/para/danfe.pdf" --no-excel
+
+# Modo silencioso (oculta logs parciais de progresso)
+python3 main.py -i "/caminho/para/pasta_danfes" -q
 ```
 
 ---
 
-## 5. Política de Privacidade de Dados
+## 5. Testes Automatizados
 
-Este projeto foi desenvolvido em estrita conformidade com diretrizes de privacidade:
+O projeto possui uma suíte de testes unitários cobrindo parsers de seções, tabela de itens, utilitários e integração do extrator:
+
+```bash
+python3 -m unittest discover tests
+```
+
+---
+
+## 6. Política de Privacidade de Dados
+
+Este projeto foi desenvolvido em estrita conformidade com diretrizes de privacidade e LGPD:
 * Nenhum dado pessoal (CPFs, nomes de pessoas físicas ou endereços residenciais) é armazenado no código fonte ou na documentação do projeto.
-* Todos os dados extraídos são tratados de forma puramente computacional e gravados em diretório de saída com permissões de acesso locais.
+* Todos os dados extraídos são tratados de forma puramente computacional em memória e gravados exclusivamente no diretório de saída definido pelo usuário.
