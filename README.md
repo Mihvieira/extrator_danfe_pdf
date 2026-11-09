@@ -133,11 +133,3 @@ python3 -m unittest discover tests
 # (Opcional) Execução local com lote próprio de PDFs reais via variável de ambiente:
 DANFE_REAL_PDF_PATH="/caminho/para/seu/arquivo.pdf" python3 -m unittest discover tests
 ```
-
----
-
-## 6. Política de Privacidade de Dados
-
-Este projeto foi desenvolvido em estrita conformidade com diretrizes de privacidade e LGPD:
-* Nenhum dado pessoal (CPFs, nomes de pessoas físicas ou endereços residenciais) é armazenado no código fonte ou na documentação do projeto.
-* Todos os dados extraídos são tratados de forma puramente computacional em memória e gravados exclusivamente no diretório de saída definido pelo usuário.
