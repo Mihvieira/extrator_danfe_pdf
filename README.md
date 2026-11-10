@@ -133,3 +133,7 @@ python3 -m unittest discover tests
 # (Opcional) Execução local com lote próprio de PDFs reais via variável de ambiente:
 DANFE_REAL_PDF_PATH="/caminho/para/seu/arquivo.pdf" python3 -m unittest discover tests
 ```
+
+## Licença
+
+Este projeto está licenciado sob a Apache License 2.0. Consulte o arquivo [LICENSE](LICENSE) para ver os termos completos.
