@@ -4,6 +4,7 @@ Executam 100% em memória, com fixtures controladas e sem dependência de I/O ex
 """
 
 import unittest
+from decimal import Decimal
 from schemas import (
     IdentificacaoNFe,
     Emitente,
@@ -56,9 +57,9 @@ class TestValueObjectsAndSchemas(unittest.TestCase):
                 hora_saida="10:00:00"
             ),
             totais=TotaisImposto(
-                bc_icms=1000.0,
-                valor_icms=180.0,
-                valor_total_nota=1500.0
+                bc_icms=Decimal("1000.00"),
+                valor_icms=Decimal("180.00"),
+                valor_total_nota=Decimal("1500.00")
             ),
             transporte=TransporteNFe(
                 modalidade_frete="0-Emitente",
@@ -90,9 +91,9 @@ class TestValueObjectsAndSchemas(unittest.TestCase):
 
         # Valida propriedades de compatibilidade
         self.assertEqual(doc.chave_acesso, "12345678901234567890123456789012345678901234")
-        self.assertEqual(doc.valor_total_nota, 1500.0)
-        self.assertEqual(doc.bc_icms, 1000.0)
-        self.assertEqual(doc.valor_icms, 180.0)
+        self.assertEqual(doc.valor_total_nota, Decimal("1500.00"))
+        self.assertEqual(doc.bc_icms, Decimal("1000.00"))
+        self.assertEqual(doc.valor_icms, Decimal("180.00"))
 
 
 class TestSubParsers(unittest.TestCase):
@@ -137,20 +138,20 @@ class TestSubParsers(unittest.TestCase):
         parser = TotaisImpostoParser()
         totais = parser.parse(lines, calc_idx=0)
 
-        self.assertEqual(totais.bc_icms, 2500.0)
-        self.assertEqual(totais.valor_icms, 450.0)
-        self.assertEqual(totais.bc_icms_st, 500.0)
-        self.assertEqual(totais.valor_icms_st, 90.0)
-        self.assertEqual(totais.valor_pis, 41.25)
-        self.assertEqual(totais.valor_total_produtos, 3000.0)
-        self.assertEqual(totais.valor_frete, 100.0)
-        self.assertEqual(totais.valor_seguro, 20.0)
-        self.assertEqual(totais.valor_desconto, 50.0)
-        self.assertEqual(totais.outras_despesas, 10.0)
-        self.assertEqual(totais.valor_total_ipi, 150.0)
-        self.assertEqual(totais.valor_tot_trib, 200.0)
-        self.assertEqual(totais.valor_cofins, 190.0)
-        self.assertEqual(totais.valor_total_nota, 3320.0)
+        self.assertEqual(totais.bc_icms, Decimal("2500.00"))
+        self.assertEqual(totais.valor_icms, Decimal("450.00"))
+        self.assertEqual(totais.bc_icms_st, Decimal("500.00"))
+        self.assertEqual(totais.valor_icms_st, Decimal("90.00"))
+        self.assertEqual(totais.valor_pis, Decimal("41.25"))
+        self.assertEqual(totais.valor_total_produtos, Decimal("3000.00"))
+        self.assertEqual(totais.valor_frete, Decimal("100.00"))
+        self.assertEqual(totais.valor_seguro, Decimal("20.00"))
+        self.assertEqual(totais.valor_desconto, Decimal("50.00"))
+        self.assertEqual(totais.outras_despesas, Decimal("10.00"))
+        self.assertEqual(totais.valor_total_ipi, Decimal("150.00"))
+        self.assertEqual(totais.valor_tot_trib, Decimal("200.00"))
+        self.assertEqual(totais.valor_cofins, Decimal("190.00"))
+        self.assertEqual(totais.valor_total_nota, Decimal("3320.00"))
 
     def test_duplicatas_parser_multiple(self):
         lines = [
@@ -170,10 +171,10 @@ class TestSubParsers(unittest.TestCase):
         self.assertEqual(len(dups), 2)
         self.assertEqual(dups[0].numero_duplicata, "1001-A")
         self.assertEqual(dups[0].data_vencimento, "2024-02-05")
-        self.assertEqual(dups[0].valor, 1250.50)
+        self.assertEqual(dups[0].valor, Decimal("1250.50"))
         self.assertEqual(dups[1].numero_duplicata, "1001-B")
         self.assertEqual(dups[1].data_vencimento, "2024-03-05")
-        self.assertEqual(dups[1].valor, 1250.50)
+        self.assertEqual(dups[1].valor, Decimal("1250.50"))
 
     def test_dados_adicionais_parser(self):
         lines = [

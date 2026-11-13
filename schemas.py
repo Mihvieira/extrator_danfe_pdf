@@ -4,6 +4,7 @@ Modelagem orientada a domínio com Value Objects imutáveis e composição limpa
 """
 
 from dataclasses import dataclass, asdict
+from decimal import Decimal
 from typing import Optional
 
 
@@ -38,24 +39,24 @@ class Destinatario:
 
 @dataclass(frozen=True)
 class TotaisImposto:
-    bc_icms: float = 0.0
-    valor_icms: float = 0.0
-    bc_icms_st: float = 0.0
-    valor_icms_st: float = 0.0
-    valor_imp_importacao: float = 0.0
-    valor_icms_uf_remet: float = 0.0
-    valor_fcp_uf_dest: float = 0.0
-    valor_pis: float = 0.0
-    valor_total_produtos: float = 0.0
-    valor_frete: float = 0.0
-    valor_seguro: float = 0.0
-    valor_desconto: float = 0.0
-    outras_despesas: float = 0.0
-    valor_total_ipi: float = 0.0
-    valor_icms_uf_dest: float = 0.0
-    valor_tot_trib: float = 0.0
-    valor_cofins: float = 0.0
-    valor_total_nota: float = 0.0
+    bc_icms: Decimal = Decimal("0.00")
+    valor_icms: Decimal = Decimal("0.00")
+    bc_icms_st: Decimal = Decimal("0.00")
+    valor_icms_st: Decimal = Decimal("0.00")
+    valor_imp_importacao: Decimal = Decimal("0.00")
+    valor_icms_uf_remet: Decimal = Decimal("0.00")
+    valor_fcp_uf_dest: Decimal = Decimal("0.00")
+    valor_pis: Decimal = Decimal("0.00")
+    valor_total_produtos: Decimal = Decimal("0.00")
+    valor_frete: Decimal = Decimal("0.00")
+    valor_seguro: Decimal = Decimal("0.00")
+    valor_desconto: Decimal = Decimal("0.00")
+    outras_despesas: Decimal = Decimal("0.00")
+    valor_total_ipi: Decimal = Decimal("0.00")
+    valor_icms_uf_dest: Decimal = Decimal("0.00")
+    valor_tot_trib: Decimal = Decimal("0.00")
+    valor_cofins: Decimal = Decimal("0.00")
+    valor_total_nota: Decimal = Decimal("0.00")
 
 
 @dataclass(frozen=True)
@@ -64,9 +65,9 @@ class TransporteNFe:
     transportador_cnpj_cpf: Optional[str] = None
     transportador_uf: Optional[str] = None
     placa_veiculo: Optional[str] = None
-    volume_quantidade: Optional[float] = None
-    peso_bruto: Optional[float] = None
-    peso_liquido: Optional[float] = None
+    volume_quantidade: Optional[Decimal] = None
+    peso_bruto: Optional[Decimal] = None
+    peso_liquido: Optional[Decimal] = None
 
 
 @dataclass
@@ -80,15 +81,15 @@ class NFeItem:
     tipo_tributacao: str  # 'CST' ou 'CSOSN'
     cfop: str
     unidade: str
-    quantidade: float
-    valor_unitario: float
-    valor_total: float
-    desconto: float
-    bc_icms: float
-    valor_icms: float
-    valor_ipi: float
-    aliq_icms: float
-    aliq_ipi: float
+    quantidade: Decimal
+    valor_unitario: Decimal
+    valor_total: Decimal
+    desconto: Decimal
+    bc_icms: Decimal
+    valor_icms: Decimal
+    valor_ipi: Decimal
+    aliq_icms: Decimal
+    aliq_ipi: Decimal
     pagina_arquivo: int
 
     def to_dict(self) -> dict:
@@ -100,7 +101,7 @@ class NFeDuplicata:
     chave_acesso: str
     numero_duplicata: str
     data_vencimento: Optional[str]
-    valor: float
+    valor: Decimal
     pagina_arquivo: int
 
     def to_dict(self) -> dict:
@@ -189,75 +190,75 @@ class NFeDocumento:
         return self.destinatario.hora_saida
 
     @property
-    def bc_icms(self) -> float:
+    def bc_icms(self) -> Decimal:
         return self.totais.bc_icms
 
     @property
-    def valor_icms(self) -> float:
+    def valor_icms(self) -> Decimal:
         return self.totais.valor_icms
 
     @property
-    def bc_icms_st(self) -> float:
+    def bc_icms_st(self) -> Decimal:
         return self.totais.bc_icms_st
 
     @property
-    def valor_icms_st(self) -> float:
+    def valor_icms_st(self) -> Decimal:
         return self.totais.valor_icms_st
 
     @property
-    def valor_imp_importacao(self) -> float:
+    def valor_imp_importacao(self) -> Decimal:
         return self.totais.valor_imp_importacao
 
     @property
-    def valor_icms_uf_remet(self) -> float:
+    def valor_icms_uf_remet(self) -> Decimal:
         return self.totais.valor_icms_uf_remet
 
     @property
-    def valor_fcp_uf_dest(self) -> float:
+    def valor_fcp_uf_dest(self) -> Decimal:
         return self.totais.valor_fcp_uf_dest
 
     @property
-    def valor_pis(self) -> float:
+    def valor_pis(self) -> Decimal:
         return self.totais.valor_pis
 
     @property
-    def valor_total_produtos(self) -> float:
+    def valor_total_produtos(self) -> Decimal:
         return self.totais.valor_total_produtos
 
     @property
-    def valor_frete(self) -> float:
+    def valor_frete(self) -> Decimal:
         return self.totais.valor_frete
 
     @property
-    def valor_seguro(self) -> float:
+    def valor_seguro(self) -> Decimal:
         return self.totais.valor_seguro
 
     @property
-    def valor_desconto(self) -> float:
+    def valor_desconto(self) -> Decimal:
         return self.totais.valor_desconto
 
     @property
-    def outras_despesas(self) -> float:
+    def outras_despesas(self) -> Decimal:
         return self.totais.outras_despesas
 
     @property
-    def valor_total_ipi(self) -> float:
+    def valor_total_ipi(self) -> Decimal:
         return self.totais.valor_total_ipi
 
     @property
-    def valor_icms_uf_dest(self) -> float:
+    def valor_icms_uf_dest(self) -> Decimal:
         return self.totais.valor_icms_uf_dest
 
     @property
-    def valor_tot_trib(self) -> float:
+    def valor_tot_trib(self) -> Decimal:
         return self.totais.valor_tot_trib
 
     @property
-    def valor_cofins(self) -> float:
+    def valor_cofins(self) -> Decimal:
         return self.totais.valor_cofins
 
     @property
-    def valor_total_nota(self) -> float:
+    def valor_total_nota(self) -> Decimal:
         return self.totais.valor_total_nota
 
     @property
@@ -277,15 +278,15 @@ class NFeDocumento:
         return self.transporte.placa_veiculo
 
     @property
-    def volume_quantidade(self) -> Optional[float]:
+    def volume_quantidade(self) -> Optional[Decimal]:
         return self.transporte.volume_quantidade
 
     @property
-    def peso_bruto(self) -> Optional[float]:
+    def peso_bruto(self) -> Optional[Decimal]:
         return self.transporte.peso_bruto
 
     @property
-    def peso_liquido(self) -> Optional[float]:
+    def peso_liquido(self) -> Optional[Decimal]:
         return self.transporte.peso_liquido
 
     def to_dict(self) -> dict:

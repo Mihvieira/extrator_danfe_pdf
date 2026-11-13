@@ -7,6 +7,7 @@ import os
 import sys
 import unittest
 import tempfile
+from decimal import Decimal
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from schemas import NFeDocumento, NFeItem, NFeDuplicata
@@ -69,10 +70,10 @@ class TestDanfeExtractorSynthetic(unittest.TestCase):
 
     def test_utils(self):
         """Valida utilitários de parsing numérico e de data."""
-        self.assertEqual(parse_decimal("1.234,56"), 1234.56)
-        self.assertEqual(parse_decimal("0,00"), 0.0)
-        self.assertEqual(parse_decimal(None), 0.0)
-        self.assertEqual(parse_decimal("invalid"), 0.0)
+        self.assertEqual(parse_decimal("1.234,56"), Decimal("1234.56"))
+        self.assertEqual(parse_decimal("0,00"), Decimal("0.00"))
+        self.assertEqual(parse_decimal(None), Decimal("0.00"))
+        self.assertEqual(parse_decimal("invalid"), Decimal("0.00"))
         self.assertEqual(parse_date_br("15/01/2023"), "2023-01-15")
         self.assertIsNone(parse_date_br(None))
         self.assertEqual(clean_spaces("  texto   com    espaços  "), "texto com espaços")
@@ -99,12 +100,12 @@ class TestDanfeExtractorSynthetic(unittest.TestCase):
         self.assertEqual(doc.destinatario_uf, "RO")
 
         # Totais
-        self.assertEqual(doc.bc_icms, 1000.0)
-        self.assertEqual(doc.valor_icms, 180.0)
-        self.assertEqual(doc.valor_pis, 16.50)
-        self.assertEqual(doc.valor_cofins, 76.00)
-        self.assertEqual(doc.valor_total_produtos, 1500.0)
-        self.assertEqual(doc.valor_total_nota, 1500.0)
+        self.assertEqual(doc.bc_icms, Decimal("1000.00"))
+        self.assertEqual(doc.valor_icms, Decimal("180.00"))
+        self.assertEqual(doc.valor_pis, Decimal("16.50"))
+        self.assertEqual(doc.valor_cofins, Decimal("76.00"))
+        self.assertEqual(doc.valor_total_produtos, Decimal("1500.00"))
+        self.assertEqual(doc.valor_total_nota, Decimal("1500.00"))
 
         # Menção a ICMS-ST
         self.assertTrue(doc.tem_mencao_icms_st)
@@ -113,7 +114,7 @@ class TestDanfeExtractorSynthetic(unittest.TestCase):
         self.assertEqual(len(duplicatas), 1)
         self.assertEqual(duplicatas[0].numero_duplicata, "001")
         self.assertEqual(duplicatas[0].data_vencimento, "2023-01-15")
-        self.assertEqual(duplicatas[0].valor, 1500.0)
+        self.assertEqual(duplicatas[0].valor, Decimal("1500.00"))
 
     def test_items_parsing(self):
         """Valida extração dos itens tabulares, suportando multilinhas e regimes tributários."""
@@ -131,18 +132,18 @@ class TestDanfeExtractorSynthetic(unittest.TestCase):
         self.assertEqual(it1.ncm, "84099190")
         self.assertEqual(it1.cst_csosn, "000")
         self.assertEqual(it1.cfop, "5102")
-        self.assertEqual(it1.quantidade, 10.0)
-        self.assertEqual(it1.valor_unitario, 100.0)
-        self.assertEqual(it1.valor_total, 1000.0)
-        self.assertEqual(it1.bc_icms, 1000.0)
-        self.assertEqual(it1.valor_icms, 180.0)
+        self.assertEqual(it1.quantidade, Decimal("10"))
+        self.assertEqual(it1.valor_unitario, Decimal("100.00"))
+        self.assertEqual(it1.valor_total, Decimal("1000.00"))
+        self.assertEqual(it1.bc_icms, Decimal("1000.00"))
+        self.assertEqual(it1.valor_icms, Decimal("180.00"))
 
         # Item 2: CSOSN
         it2 = items[1]
         self.assertEqual(it2.codigo_produto, "PROD02")
         self.assertEqual(it2.cst_csosn, "0102")
         self.assertEqual(it2.tipo_tributacao, "CST")  # Cabeçalho da página continha CST
-        self.assertEqual(it2.valor_total, 500.0)
+        self.assertEqual(it2.valor_total, Decimal("500.00"))
 
     def test_exporter(self):
         """Valida exportação para arquivos CSV e Excel."""
@@ -214,8 +215,8 @@ class TestDanfeExtractorRealPdf(unittest.TestCase):
         total_icms_docs = round(sum(d.valor_icms for d in self.docs), 2)
         total_icms_itens = round(sum(it.valor_icms for it in self.itens), 2)
 
-        self.assertGreater(total_bc_docs, 0.0)
-        self.assertGreater(total_icms_docs, 0.0)
+        self.assertGreater(total_bc_docs, Decimal("0.00"))
+        self.assertGreater(total_icms_docs, Decimal("0.00"))
         self.assertEqual(total_bc_docs, total_bc_itens)
         self.assertEqual(total_icms_docs, total_icms_itens)
 

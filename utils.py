@@ -3,12 +3,13 @@ Funções utilitárias de limpeza e conversão de tipos de dados para DANFEs.
 """
 
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Optional
 
 
-def parse_decimal(value: Optional[str], default: float = 0.0) -> float:
+def parse_decimal(value: Optional[str], default: Optional[Decimal] = Decimal("0.00")) -> Optional[Decimal]:
     """
-    Converte número formatado no padrão brasileiro (ex: '1.234,56' ou '123,45') para float.
+    Converte número formatado no padrão brasileiro (ex: '1.234,56' ou '123,45') para Decimal.
     Trata strings vazias ou nulas retornando o valor default.
     """
     if not value:
@@ -30,8 +31,8 @@ def parse_decimal(value: Optional[str], default: float = 0.0) -> float:
         text = text.replace(',', '.')
 
     try:
-        return float(text)
-    except ValueError:
+        return Decimal(text)
+    except (InvalidOperation, ValueError):
         return default
 
 

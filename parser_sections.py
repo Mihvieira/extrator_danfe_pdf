@@ -12,6 +12,7 @@ extensibilidade (OCP) e alta testabilidade.
 """
 
 import re
+from decimal import Decimal
 from typing import List, Tuple, Optional
 from schemas import (
     IdentificacaoNFe,
@@ -268,7 +269,7 @@ class TotaisImpostoParser:
         base_idx: int,
         header_targets: List[str],
         max_lookahead: int
-    ) -> List[float]:
+    ) -> List[Decimal]:
         hdr_idx = -1
         limit = min(len(lines), base_idx + max_lookahead)
         for i in range(base_idx + 1, limit):
@@ -277,7 +278,7 @@ class TotaisImpostoParser:
                 hdr_idx = i
                 break
 
-        row: List[float] = [0.0] * 9
+        row: List[Decimal] = [Decimal("0.00")] * 9
         if hdr_idx != -1:
             for off in range(1, 5):
                 if hdr_idx + off < len(lines):
